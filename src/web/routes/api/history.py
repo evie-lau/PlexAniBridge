@@ -119,3 +119,17 @@ async def latest_history(
             q = q.filter(SyncHistory.timestamp > since_dt)
         items = q.limit(limit).all()
     return {"items": [r.model_dump(mode="json") for r in items]}
+
+@router.delete("/{profile}/{id}")
+async def delete_history_entry(profile: str, id: int):
+    """Delete a sync history entry by ID for a profile."""
+    with db as ctx:
+        entry = ctx.session.query(SyncHistory).filter(
+            SyncHistory.profile_name == profile,
+            SyncHistory.id == id
+        ).first()
+        if not entry:
+            raise HTTPException(404, "Sync log entry not found")
+        ctx.session.delete(entry)
+        ctx.session.commit()
+    return {"success": True}
